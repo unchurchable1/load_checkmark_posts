@@ -12,8 +12,8 @@ https://chrome.google.com/webstore/detail/block-the-blue-twitter-ve/ppoilcngmmnm
 """
 
 import webbrowser
-import pyautogui
 import time
+import pyautogui
 
 
 def generate_url(query_parameter):
@@ -27,52 +27,74 @@ def close_browser_tab():
     pyautogui.hotkey("ctrl", "w")
 
 
+def wiggle_and_scroll(duration):
+    # Move the mouse cursor around a bit
+    pyautogui.move(10, 10, duration=0.5)
+    pyautogui.move(-10, -10, duration=0.5)
+
+    # Get the screen dimensions
+    screen_width, screen_height = pyautogui.size()
+
+    # Move the mouse cursor back to the middle of the screen
+    pyautogui.moveTo(screen_width // 2, screen_height // 2)
+
+    # Get the current time
+    start_time = time.time()
+
+    # Continuously scroll downward
+    while True:
+        # Negative value for scrolling downward, decreased scroll amount
+        pyautogui.scroll(-10)
+
+        # Check if {duration} seconds have elapsed
+        elapsed_time = time.time() - start_time
+        if elapsed_time >= duration:
+            break
+
+
 def load_checkmark_posts():
     # Generate URLs for "new" and "top" posts
     url_new_posts = generate_url("&f=live")
     url_top_posts = generate_url("")
 
-    # Start with "new" posts
-    current_url = url_new_posts
+    # Start with "top" posts
+    webbrowser.open(url_top_posts)
 
+    # Sleep for 5 seconds to allow the webpage to load
+    time.sleep(5)
+
+    # Scroll the "top" posts page once for one minute
+    wiggle_and_scroll(60)
+
+    # Close the "top" posts page before opening "new"
+    close_browser_tab()
+
+    # Sleep for a second to allow the browser to close the previous tab
+    time.sleep(1)
+
+    # Open the "new" posts page in the user's default browser
+    webbrowser.open(url_new_posts)
+
+    # Get the current time
+    start_time = time.time()
+
+    # Scroll the posts until the script is exited
     while True:
-        # Close the previous webpage before opening a new one
-        close_browser_tab()
-        # Sleep for a second to allow the browser to close the previous tab
-        time.sleep(1)
-
-        # Open the new webpage in the user's default browser
-        webbrowser.open(current_url)
-
         # Sleep for 5 seconds to allow the webpage to load
         time.sleep(5)
 
-        # Get the screen dimensions
-        screen_width, screen_height = pyautogui.size()
+        # Scroll the "new" posts page for two minutes
+        wiggle_and_scroll(120)
 
-        # Move the mouse cursor to the middle of the screen
-        pyautogui.moveTo(screen_width // 2, screen_height // 2)
+        # Restart after 15 minutes
+        elapsed_time = time.time() - start_time
+        if elapsed_time >= 900:
+            close_browser_tab()
+            # RECURSION
+            load_checkmark_posts()
 
-        # Sleep for 5 seconds after moving the mouse cursor to the center
-        time.sleep(5)
-
-        # Get the current time
-        start_time = time.time()
-
-        # Infinite loop to continuously scroll downward
-        while True:
-            # Scroll continuously
-            # Negative value for scrolling downward, decreased scroll amount
-            pyautogui.scroll(-10)
-
-            # Check if 60 seconds have elapsed
-            elapsed_time = time.time() - start_time
-            if elapsed_time >= 60:
-                # Switch between "new" and "top" posts URLs
-                current_url = (
-                    url_top_posts if current_url == url_new_posts else url_new_posts
-                )
-                break
+        # Refresh the page to load new posts
+        pyautogui.press("f5")
 
 
 # Call the function to start loading verified users' posts
